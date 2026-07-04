@@ -65,7 +65,6 @@ if st.button("Vertaal nu 🔥"):
 
         try:
             with st.spinner("Vertalen..."):
-                # We schieten het verzoek RECHTSTREEKS naar de stabiele en snelle Groq-servers
                 url = "https://groq.com"
                 
                 headers = {
@@ -88,6 +87,7 @@ if st.button("Vertaal nu 🔥"):
                 if response.status_code == 200 and 'choices' in result_json:
                     full_text = result_json['choices'][0]['message']['content']
                     
+                    # FIX: Hier splitsen en strippen we de tekst nu per onderdeel correct op zonder te crashen
                     if "---" in full_text:
                         parts = full_text.split("---")
                         translation_part = parts[0].strip()
@@ -100,11 +100,7 @@ if st.button("Vertaal nu 🔥"):
                     cleaned_dutch = explanation_part.replace("**", "").replace("*", "").strip()
                     
                     st.write("📋 **Kopieer de vertaling hieronder voor de afzender:**")
-                    
-                    # Dit toont een strak grijs vak met een ingebouwde iOS kopieerknop
                     st.code(cleaned_translation, language="text")
-                    
-                    # Pure Nederlandse vertaling eronder zonder extra tekst
                     st.info(f"**Betekenis in het Nederlands:**\n\n{cleaned_dutch}")
                 else:
                     error_msg = result_json.get('error', {}).get('message', 'Onbekende fout')
