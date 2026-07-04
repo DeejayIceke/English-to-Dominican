@@ -3,7 +3,7 @@ from groq import Groq
 
 # 1. Pagina-instellingen voor mobiel (iPhone)
 st.set_page_config(
-    page_title="Dominican Translate",
+    page_title="Dominicaanse Straattaal",
     page_icon="🇩🇴",
     layout="centered"
 )
@@ -21,8 +21,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🇩🇴 Dominican Translator")
-st.write("Vertaal, verbeter en begrijp Dominicaanse straattaal.")
+st.title("🇩🇴 Dominicaanse Straattaal")
+st.write("Vertaal, verbeter en begrijp de taal van de Dominicaanse straten.")
 
 # Laad de Groq sleutel uit de Streamlit Secrets
 if "GEMINI_API_KEY" in st.secrets:
@@ -44,9 +44,9 @@ if st.button("Vertaal nu 🔥"):
     if user_input:
         if direction == "Engels ➡️ Dominicaanse Straattaal":
             system_prompt = (
-                "You are an expert translator and language improver for Dominican Republic street slang.\n"
+                "You are an expert translator and language improver for Dominican Republic street language.\n"
                 "Step 1: Improve the user's English input so it sounds like a natural English speaker.\n"
-                "Step 2: Translate that improved meaning into authentic Dominican Spanish street slang (using terms like klk, tigre, vaina, heavy, dime a ver).\n"
+                "Step 2: Translate that improved meaning into authentic Dominican Spanish street language (using terms like klk, tigre, vaina, heavy, dime a ver).\n"
                 "Step 3: Translate that exact same meaning into a natural, correct Dutch sentence.\n"
                 "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using the delimiter '---'.\n"
                 "Part 1 (Before '---'): Output ONLY the clean, raw Dominican translation. No formatting, no asterisks, no notes.\n"
@@ -54,8 +54,8 @@ if st.button("Vertaal nu 🔥"):
             )
         else:
             system_prompt = (
-                "You are an expert in Dominican Republic slang.\n"
-                "Step 1: Translate the Dominican slang text into clear, natural English.\n"
+                "You are an expert in Dominican Republic street language.\n"
+                "Step 1: Translate the Dominican street text into clear, natural English.\n"
                 "Step 2: Translate that same meaning into a natural, correct Dutch sentence.\n"
                 "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using the delimiter '---'.\n"
                 "Part 1 (Before '---'): Output ONLY the clean, raw English translation.\n"
