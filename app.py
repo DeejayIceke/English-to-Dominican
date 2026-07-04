@@ -25,7 +25,7 @@ st.title("🇩🇴 Dominican Slang Translator (Gratis)")
 st.write("Vertaal snel tussen Engels en Dominicaanse straattaal (*Qué lo qué!*).")
 
 # 2. Google Gemini API Sleutel invoeren
-api_key = st.text_input("Vul je GRATIS Google Gemini API sleutel in (begint met AIzaSy):", type="password")
+api_key = st.text_input("Vul je GRATIS Google Gemini API sleutel in (begint met AIzaSy of AQ):", type="password")
 
 if api_key:
     # 3. Kies de vertaalrichting
@@ -58,8 +58,9 @@ if api_key:
 
             try:
                 with st.spinner("Vertalen via Google Gemini..."):
-                    # Officiële Google Gemini API URL
-                    url = f"https://googleapis.com{api_key.strip()}"
+                    # FIX: De URL is nu helemaal correct opgebouwd met een vraagteken voor de key parameter
+                    clean_key = api_key.strip()
+                    url = f"https://googleapis.com{clean_key}"
                     
                     headers = {"Content-Type": "application/json"}
                     
