@@ -8,15 +8,24 @@ st.set_page_config(
     layout="centered"
 )
 
-# Voeg strakke styling toe voor iOS knoppen
+# FIX: CSS-styling aangepast voor grotere tekst op knoppen en in het invoervak
 st.markdown("""
     <style>
+    /* Styling voor de vertaalknop */
     div.stButton > button {
         width: 100%;
         border-radius: 12px;
-        height: 50px;
-        font-size: 16px;
+        height: 55px;
+        font-size: 20px; /* Grotere tekst op de knop */
         font-weight: bold;
+    }
+    /* Styling voor de tekst binnen het invoervak */
+    .stTextArea textarea {
+        font-size: 18px !important; /* Grotere typtekst */
+    }
+    /* Styling voor de label boven het invoervak */
+    .stTextArea label p {
+        font-size: 16px !important; 
     }
     </style>
 """, unsafe_allow_html=True)
@@ -31,12 +40,12 @@ else:
     st.error("⚠️ API-sleutel niet gevonden in Streamlit Secrets!")
     st.stop()
 
-# 4. Invoervak voor de tekst (De radio-knoppen zijn nu weggehaald!)
+# Invoervak voor de tekst
 user_input = st.text_area("Typ of plak hier je tekst (Engels of Dominicaans):", height=100)
 
-if st.button("Vertaal nu 🔥"):
+# FIX: Vertaal-knop aangepast met Dominicaanse vlag en zonder vuurtje
+if st.button("🇩🇴 Vertaal nu"):
     if user_input:
-        # We geven de AI één slimme, gecombineerde instructie om de taal zelf te detecteren
         system_prompt = (
             "You are an expert translator and language identifier for Dominican Republic street language.\n"
             "CRUCIAL TASK: Analyze the user's input text. Automatically detect if it is in English or in Dominican Spanish slang.\n\n"
@@ -48,12 +57,12 @@ if st.button("Vertaal nu 🔥"):
             "1. Translate the Dominican street text into clear, natural English.\n"
             "2. Translate that same meaning into a single, natural, and correct Dutch sentence.\n\n"
             "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using the delimiter '---'.\n"
-            "Part 1 (Before '---'): Output ONLY the clean, raw translation (Dominican Spanish if input was English, or English if input was Dominican). No formatting, no asterisks, no notes. This will be copied to clipboard.\n"
-            "Part 2 (After '---'): Output ONLY the direct, natural translation of the entire phrase in the Dutch language as ONE single text block. Do NOT use bullet points, do NOT list individual words, and do NOT write English explanations. Just the pure Dutch meaning."
+            "Part 1 (Before '---'): Output ONLY the clean, raw Dominican/English translation. No formatting, no asterisks, no notes. This will be copied to clipboard.\n"
+            "Part 2 (After '---'): Output ONLY the direct, natural translation of the phrase in the Dutch language as ONE single text block. No fluff, just the pure Dutch meaning."
         )
 
         try:
-            with st.spinner("Taal herkennen en vertalen..."):
+            with st.spinner("Vertalen..."):
                 client = Groq(api_key=api_key)
                 
                 response = client.chat.completions.create(
