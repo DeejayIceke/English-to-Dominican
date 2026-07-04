@@ -56,10 +56,11 @@ if api_key:
 
             try:
                 with st.spinner("Vertalen..."):
-                    # Schiet de aanroep rechtstreeks naar OpenRouter
+                    # We voegen nu een 'User-Agent' toe zodat OpenRouter ons ziet als een echte app/browser
                     headers = {
                         "Authorization": f"Bearer {api_key.strip()}",
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
                     }
                     
                     data = {
@@ -67,8 +68,7 @@ if api_key:
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_input}
-                        ],
-                        "temperature": 0.8
+                        ]
                     }
                     
                     response = requests.post(
@@ -77,10 +77,10 @@ if api_key:
                         data=json.dumps(data)
                     )
                     
-                    # FIX: We controleren eerst of het antwoord wel JSON is
                     try:
                         result_json = response.json()
                         if response.status_code == 200 and 'choices' in result_json:
+                            # Haal de vertaling op uit de JSON structuur
                             translation = result_json['choices'][0]['message']['content']
                             st.success("**Vertaling:**")
                             st.code(translation, language="text")
@@ -89,7 +89,6 @@ if api_key:
                             error_msg = result_json.get('error', {}).get('message', 'Onbekende fout van OpenRouter')
                             st.error(f"Foutmelding van OpenRouter: {error_msg}")
                     except ValueError:
-                        # Als OpenRouter platte tekst/HTML stuurt, tonen we de eerste 200 tekens hiervan veilig op het scherm
                         st.error(f"OpenRouter stuurde geen JSON terug (Status {response.status_code}). Server antwoord: {response.text[:200]}")
                         
             except Exception as e:
