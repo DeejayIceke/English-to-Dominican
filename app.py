@@ -57,10 +57,9 @@ if api_key:
 
             try:
                 with st.spinner("Vertalen via Google Gemini..."):
-                    # FIX: De URL is nu ALTIJD hetzelfde en kan NOOIT meer breken door een sleutel!
+                    # FIX: We gebruiken nu 'gemini-1.5-flash-latest', dit voorkomt de 404-fout
                     url = "https://googleapis.com"
                     
-                    # We sturen de sleutel veilig mee via de x-goog-api-key header
                     headers = {
                         "Content-Type": "application/json",
                         "x-goog-api-key": api_key.strip()
