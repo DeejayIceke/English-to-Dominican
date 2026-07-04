@@ -25,11 +25,11 @@ st.markdown("""
 st.title("🇩🇴 Dominican Translator")
 st.write("Vertaal, verbeter en begrijp Dominicaanse straattaal.")
 
-# FIX: De handmatige invoerbalk is weg! De sleutel wordt nu automatisch en onzichtbaar uit de kluis geladen.
+# Laad het token uit de Streamlit Secrets
 if "GEMINI_API_KEY" in st.secrets:
-    api_key = st.secrets["GEMINI_API_KEY"]
+    token = st.secrets["GEMINI_API_KEY"].strip()
 else:
-    st.error("⚠️ API-sleutel niet gevonden in Streamlit Secrets! Voeg deze eerst toe in de instellingen van je Streamlit Dashboard.")
+    st.error("⚠️ Token niet gevonden in Streamlit Secrets!")
     st.stop()
 
 # 3. Kies de vertaalrichting
@@ -65,7 +65,8 @@ if st.button("Vertaal nu 🔥"):
 
         try:
             with st.spinner("Vertalen..."):
-                client = genai.Client(api_key=api_key.strip())
+                # FIX: We geven de 'AQ...' code nu expliciet mee als OAuth/Access token aan de client
+                client = genai.Client(http_options={'headers': {'Authorization': f'Bearer {token}'}})
                 
                 try:
                     response = client.models.generate_content(
@@ -89,7 +90,6 @@ if st.button("Vertaal nu 🔥"):
                 if response.text:
                     full_text = response.text
                     
-                    # Splits het antwoord op het '---' teken
                     if "---" in full_text:
                         parts = full_text.split("---")
                         translation_part = parts[0].strip()
@@ -98,22 +98,16 @@ if st.button("Vertaal nu 🔥"):
                         translation_part = full_text.strip()
                         explanation_part = "Geen Nederlandse vertaling beschikbaar."
 
-                    # Maak de vertaling helemaal schoon van sterretjes
                     cleaned_translation = translation_part.replace("**", "").replace("*", "").strip()
                     cleaned_dutch = explanation_part.replace("**", "").replace("*", "").strip()
                     
                     st.write("📋 **Kopieer de vertaling hieronder voor de afzender:**")
-                    
-                    # Dit toont een strak grijs vak met de ingebouwde iOS kopieerknop
                     st.code(cleaned_translation, language="text")
-                    
-                    # Pure Nederlandse vertaling als één tekst eronder
                     st.info(f"**Wat betekent dit in het Nederlands:**\n\n{cleaned_dutch}")
-                    
                 else:
                     st.error("Google stuurde een leeg antwoord terug.")
                     
         except Exception as e:
-            st.error(f"Er ging iets mis: {e}")
-    else:
-        st.warning("Typ eerst een tekst.")
+            st.error(f"Er ging iets mis met je token: {e}")
+else:
+    st.info("Voeg eerst je token toe aan de Secrets.")
