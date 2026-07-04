@@ -47,16 +47,16 @@ if st.button("Vertaal nu 🔥"):
                 "You are an expert translator and language improver for Dominican Republic street language.\n"
                 "Step 1: Improve the user's English input so it sounds like a natural English speaker.\n"
                 "Step 2: Translate that improved meaning into authentic Dominican Spanish street language (using terms like klk, tigre, vaina, heavy, dime a ver).\n"
-                "Step 3: Translate that exact same meaning into a natural, correct Dutch sentence.\n"
+                "Step 3: Translate that exact same meaning into a single, natural, and correct Dutch sentence.\n"
                 "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using the delimiter '---'.\n"
                 "Part 1 (Before '---'): Output ONLY the clean, raw Dominican translation. No formatting, no asterisks, no notes.\n"
-                "Part 2 (After '---'): Output ONLY the direct, natural translation of the phrase in the Dutch language. No bullet points, no grammatical explanations, no extra fluff. Just the pure Dutch sentence."
+                "Part 2 (After '---'): Output ONLY the direct, natural translation of the phrase in the Dutch language. No bullet points, no grammatical explanations, no extra fluff. Just write ONE single, complete Dutch text/sentence that explains the total meaning."
             )
         else:
             system_prompt = (
                 "You are an expert in Dominican Republic street language.\n"
                 "Step 1: Translate the Dominican street text into clear, natural English.\n"
-                "Step 2: Translate that same meaning into a natural, correct Dutch sentence.\n"
+                "Step 2: Translate that same meaning into a single, natural, and correct Dutch sentence.\n"
                 "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using the delimiter '---'.\n"
                 "Part 1 (Before '---'): Output ONLY the clean, raw English translation.\n"
                 "Part 2 (After '---'): Output ONLY the direct, natural translation of the phrase in the Dutch language as ONE single text. No fluff, just the pure Dutch sentence."
@@ -75,12 +75,13 @@ if st.button("Vertaal nu 🔥"):
                     temperature=0.7
                 )
                 
-                full_text = response.choices.message.content
+                # FIX: We hebben hier [0] toegevoegd om de eerste keuze correct uit de lijst te pakken
+                full_text = response.choices[0].message.content
                 
                 if "---" in full_text:
                     parts = full_text.split("---")
-                    translation_part = parts.strip()
-                    explanation_part = parts.strip()
+                    translation_part = parts[0].strip()
+                    explanation_part = parts[1].strip()
                 else:
                     translation_part = full_text.strip()
                     explanation_part = "Geen Nederlandse vertaling beschikbaar."
@@ -96,4 +97,3 @@ if st.button("Vertaal nu 🔥"):
             st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
     else:
         st.warning("Typ eerst een tekst.")
-# De oude 'else' melding onderaan is nu volledig verwijderd!
