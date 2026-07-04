@@ -8,9 +8,19 @@ st.set_page_config(
     layout="centered"
 )
 
-# CSS-styling voor grotere tekst op knoppen en in het invoervak
+# FIX: CSS-styling uitgebreid om het Streamlit logo en de bovenbalk te VERBERGEN
 st.markdown("""
     <style>
+    /* Verberg de Streamlit bovenbalk, het logo en de header */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Zorg dat de app strak bovenaan begint nu de balk weg is */
+    .block-container {
+        padding-top: 2rem !important;
+    }
+
     /* Styling voor de vertaalknop */
     div.stButton > button {
         width: 100%;
@@ -45,7 +55,6 @@ user_input = st.text_area("Typ of plak hier je tekst (Engels of Dominicaans):", 
 
 if st.button("🇩🇴 Vertaal nu"):
     if user_input:
-        # Meschere, dwingende instructies voor de AI om de kopieerbox ALTIJD voor de afzender te maken
         system_prompt = (
             "You are an expert translator and language identifier for Dominican Republic street language.\n"
             "CRUCIAL TASK: Analyze the user's input text. Automatically detect if it is in English or in Dominican Spanish slang.\n\n"
