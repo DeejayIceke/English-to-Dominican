@@ -24,8 +24,8 @@ st.markdown("""
 st.title("🇩🇴 Dominican Slang Translator (Gratis)")
 st.write("Vertaal snel tussen Engels en Dominicaanse straattaal (*Qué lo qué!*).")
 
-# 2. OpenRouter API Sleutel invoeren
-api_key = st.text_input("Vul je GRATIS OpenRouter API sleutel in:", type="password")
+# 2. Google Gemini API Sleutel invoeren
+api_key = st.text_input("Vul je GRATIS Google Gemini API sleutel in (begint met AIzaSy):", type="password")
 
 if api_key:
     # 3. Kies de vertaalrichting
@@ -40,60 +40,56 @@ if api_key:
     if st.button("Vertaal nu 🔥"):
         if user_input:
             if direction == "Engels ➡️ Dominicaanse Straattaal":
-                system_prompt = (
+                prompt_instruction = (
                     "You are an expert translator specializing in Dominican Republic Spanish. "
                     "Translate the following English text into authentic Dominican Spanish. "
                     "Crucial: Use local Dominican slang, street language, and informal vocabulary "
                     "(like '¿Qué lo qué?', 'klk', 'tigre', 'wawawa', 'vaina', 'heavy', 'dime a ver'). "
-                    "Do NOT use standard formal Spanish (Castilian). Make it sound natural on the streets of Santo Domingo."
+                    "Do NOT use standard formal Spanish (Castilian). Make it sound natural on the streets of Santo Domingo. "
+                    f"Text to translate: {user_input}"
                 )
             else:
-                system_prompt = (
+                prompt_instruction = (
                     "You are an expert in Dominican Republic slang and street language. "
                     "Translate the following Dominican slang text into clear, natural English so the user can easily understand "
-                    "what the sender means, including the subtext of the street slang used."
+                    "what the sender means, including the subtext of the street slang used. "
+                    f"Text to translate: {user_input}"
                 )
 
             try:
-                with st.spinner("Vertalen..."):
-                    # We voegen nu een 'User-Agent' toe zodat OpenRouter ons ziet als een echte app/browser
-                    headers = {
-                        "Authorization": f"Bearer {api_key.strip()}",
-                        "Content-Type": "application/json",
-                        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
-                    }
+                with st.spinner("Vertalen via Google Gemini..."):
+                    # Officiële Google Gemini API URL
+                    url = f"https://googleapis.com{api_key.strip()}"
+                    
+                    headers = {"Content-Type": "application/json"}
                     
                     data = {
-                        "model": "google/gemini-2.5-flash:free",
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": user_input}
-                        ]
+                        "contents": [{
+                            "parts": [{"text": prompt_instruction}]
+                        }]
                     }
                     
-                    response = requests.post(
-                        url="https://openrouter.ai",
-                        headers=headers,
-                        data=json.dumps(data)
-                    )
+                    response = requests.post(url=url, headers=headers, json=data)
                     
                     try:
                         result_json = response.json()
-                        if response.status_code == 200 and 'choices' in result_json:
-                            # Haal de vertaling op uit de JSON structuur
-                            translation = result_json['choices'][0]['message']['content']
+                        
+                        if response.status_code == 200 and 'candidates' in result_json:
+                            # Haal de tekst op uit de Google JSON structuur
+                            translation = result_json['candidates'][0]['content']['parts'][0]['text']
                             st.success("**Vertaling:**")
                             st.code(translation, language="text")
                             st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
                         else:
-                            error_msg = result_json.get('error', {}).get('message', 'Onbekende fout van OpenRouter')
-                            st.error(f"Foutmelding van OpenRouter: {error_msg}")
+                            error_msg = result_json.get('error', {}).get('message', 'Onbekende fout')
+                            st.error(f"Fout van Google: {error_msg}")
+                            
                     except ValueError:
-                        st.error(f"OpenRouter stuurde geen JSON terug (Status {response.status_code}). Server antwoord: {response.text[:200]}")
+                        st.error(f"Google stuurde geen geldige data terug (Status {response.status_code}).")
                         
             except Exception as e:
                 st.error(f"Er ging iets mis met de verbinding: {e}")
         else:
             st.warning("Typ eerst een tekst om te vertalen.")
 else:
-    st.info("Vul eerst je OpenRouter API-sleutel in om de app gratis te gebruiken.")
+    st.info("Vul eerst je Google Gemini API-sleutel in om de app gratis te gebruiken.")
