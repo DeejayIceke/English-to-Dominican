@@ -96,7 +96,7 @@ if api_key:
                         # Haal ongewenste symbolen uit het kopieergedeelte
                         cleaned_translation = translation_part.replace("**", "").replace("*", "").strip()
                         
-                        st.success("**Klaar!**")
+                        # FIX: De groene st.success("Klaar!") balk is hier nu weggehaald voor een rustiger scherm
                         
                         # 📲 Schone kopieerbox voor WhatsApp (ZONDER de uitleg)
                         st.text_input(
