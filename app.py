@@ -8,7 +8,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Voeg wat styling toe voor mooie knoppen op mobiel
+# Voeg styling toe voor mooie knoppen op mobiel
 st.markdown("""
     <style>
     div.stButton > button {
@@ -20,15 +20,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🇩🇴 Dominican Slang Translator")
+st.title("🇩🇴 Dominican Slang Translator (Gratis)")
 st.write("Vertaal snel tussen Engels en Dominicaanse straattaal (*Qué lo qué!*).")
 
-# 2. OpenAI API Sleutel invoeren (veilig via Streamlit secrets of invoervak)
-# Voor nu maken we een invoervak, later kun je dit automatiseren via Streamlit Secrets
-api_key = st.text_input("Vul je OpenAI API sleutel in:", type="password")
+# 2. OpenRouter API Sleutel invoeren
+api_key = st.text_input("Vul je GRATIS OpenRouter API sleutel in:", type="password")
 
 if api_key:
+    # We configureren de OpenAI-bibliotheek om verbinding te maken met OpenRouter
     openai.api_key = api_key
+    openai.api_base = "https://openrouter.ai"
 
     # 3. Kies de vertaalrichting
     direction = st.radio(
@@ -41,7 +42,6 @@ if api_key:
 
     if st.button("Vertaal nu 🔥"):
         if user_input:
-            # Systeemprompt instellen op basis van de richting
             if direction == "Engels ➡️ Dominicaanse Straattaal":
                 system_prompt = (
                     "You are an expert translator specializing in Dominican Republic Spanish. "
@@ -58,29 +58,26 @@ if api_key:
                 )
 
             try:
-                # API aanroep naar ChatGPT
                 with st.spinner("Vertalen..."):
+                    # We gebruiken hier een volledig gratis en krachtig open-source model via OpenRouter
                     response = openai.ChatCompletion.create(
-                        model="gpt-4o",  # Of gebruik "gpt-3.5-turbo" als goedkoper alternatief
+                        model="meta-llama/llama-3-8b-instruct:free", 
                         messages=[
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_input}
                         ],
-                        temperature=0.8 # Iets hoger voor meer creatieve/authentieke straattaal
+                        temperature=0.8
                     )
                 
                 translation = response.choices[0].message.content
                 
-                # Toon de vertaling in een mooi vak
                 st.success("**Vertaling:**")
                 st.code(translation, language="text")
-                st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven om de tekst direct te kopiëren!")
+                st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
 
             except Exception as e:
-                st.error(
-                    "Er ging iets mis met de API. Controleer je sleutel of tegoed."
-                )
+                st.error(f"Er ging iets mis: {e}")
         else:
             st.warning("Typ eerst een tekst om te vertalen.")
 else:
-    st.info("Vul eerst je OpenAI API-sleutel in om de app te gebruiken.")
+    st.info("Vul eerst je OpenRouter API-sleutel in om de app gratis te gebruiken.")
