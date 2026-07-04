@@ -27,7 +27,7 @@ st.write("Vertaal snel tussen Engels en Dominicaanse straattaal (*Qué lo qué!*
 api_key = st.text_input("Vul je GRATIS OpenRouter API sleutel in:", type="password")
 
 if api_key:
-    # We maken de nieuwe OpenAI client aan, speciaal geconfigureerd voor OpenRouter
+    # We maken de OpenAI client aan voor OpenRouter
     client = OpenAI(
         base_url="https://openrouter.ai",
         api_key=api_key,
@@ -61,9 +61,9 @@ if api_key:
 
             try:
                 with st.spinner("Vertalen..."):
-                    # Dit is de gloednieuwe manier om het model aan te roepen
+                    # We gebruiken nu het super snelle en stabiele Google Gemini model (volledig gratis via OpenRouter)
                     response = client.chat.completions.create(
-                        model="meta-llama/llama-3-8b-instruct:free", 
+                        model="google/gemini-2.5-flash:free", 
                         messages=[
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_input}
@@ -71,15 +71,18 @@ if api_key:
                         temperature=0.8
                     )
                 
-                # Het antwoord uitlezen op de nieuwe manier
-                translation = response.choices[0].message.content
-                
-                st.success("**Vertaling:**")
-                st.code(translation, language="text")
-                st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
-
+                # Controleer of het antwoord correct is binnengekomen
+                if hasattr(response, 'choices') and len(response.choices) > 0:
+                    translation = response.choices[0].message.content
+                    st.success("**Vertaling:**")
+                    st.code(translation, language="text")
+                    st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
+                else:
+                    # Als OpenRouter een fouttekst terugstuurt in plaats van data, tonen we die hier netjes
+                    st.error(f"OpenRouter stuurde geen geldige vertaling terug. Reactie: {response}")
+                    
             except Exception as e:
-                st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
+                st.error(f"Er ging iets mis met de verbinding: {e}")
         else:
             st.warning("Typ eerst een tekst om te vertalen.")
 else:
