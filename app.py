@@ -9,23 +9,24 @@ st.set_page_config(
     layout="centered"
 )
 
-# Voeg styling toe voor mooie knoppen op mobiel
+# Voeg strakke styling toe voor iOS knoppen
 st.markdown("""
     <style>
     div.stButton > button {
         width: 100%;
-        border-radius: 10px;
+        border-radius: 12px;
         height: 50px;
         font-size: 16px;
+        font-weight: bold;
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🇩🇴 Dominican Slang Translator (Gratis)")
-st.write("Vertaal snel tussen Engels en Dominicaanse straattaal (*Qué lo qué!*).")
+st.title("🇩🇴 Dominican Translator")
+st.write("Vertaal, verbeter en begrijp Dominicaanse straattaal (*Qué lo qué!*).")
 
 # 2. Google Gemini API Sleutel invoeren
-api_key = st.text_input("Vul je GRATIS Google Gemini API sleutel in (begint met AIzaSy of AQ):", type="password")
+api_key = st.text_input("Vul je GRATIS Google Gemini API sleutel in:", type="password")
 
 if api_key:
     # 3. Kies de vertaalrichting
@@ -41,25 +42,27 @@ if api_key:
         if user_input:
             if direction == "Engels ➡️ Dominicaanse Straattaal":
                 system_prompt = (
-                    "You are an expert translator specializing in Dominican Republic Spanish. "
-                    "Translate the following English text into authentic Dominican Spanish. "
-                    "Crucial: Use local Dominican slang, street language, and informal vocabulary "
-                    "(like '¿Qué lo qué?', 'klk', 'tigre', 'wawawa', 'vaina', 'heavy', 'dime a ver'). "
-                    "Do NOT use standard formal Spanish (Castilian). Make it sound natural on the streets of Santo Domingo."
+                    "You are an expert translator and language improver for Dominican Republic street slang.\n"
+                    "Step 1: Analyze the user's English input. If it has typos, bad grammar, or sounds unnatural, improve it so it sounds like a confident native English speaker first.\n"
+                    "Step 2: Translate that improved meaning into authentic Dominican Spanish street slang.\n"
+                    "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using a special delimiter '---'.\n"
+                    "Part 1 (Before '---'): Output ONLY the clean, raw Dominican translation. No formatting, no asterisks, no notes. This will be copied to clipboard.\n"
+                    "Part 2 (After '---'): Provide a brief, helpful explanation in English or Dutch explaining the slang used (like klk, tigre, vaina) and any nuances, so the user learns the street context."
                 )
             else:
                 system_prompt = (
-                    "You are an expert in Dominican Republic slang and street language. "
-                    "Translate the following Dominican slang text into clear, natural English so the user can easily understand "
-                    "what the sender means, including the subtext of the street slang used."
+                    "You are an expert in Dominican Republic slang.\n"
+                    "Step 1: Translate the Dominican slang text into clear, natural, and grammatically correct English.\n"
+                    "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using a special delimiter '---'.\n"
+                    "Part 1 (Before '---'): Output ONLY the clean, raw English translation. No formatting or notes.\n"
+                    "Part 2 (After '---'): Provide a brief explanation of the original Dominican slang terms used and what they imply on the streets."
                 )
 
             try:
-                with st.spinner("Vertalen via Google Gemini..."):
+                with st.spinner("Vertalen en analyseren..."):
                     client = genai.Client(api_key=api_key.strip())
                     
                     try:
-                        # Probeere eerst het stabiele gemini-1.5 model om drukte te vermijden
                         response = client.models.generate_content(
                             model='gemini-1.5-flash',
                             contents=user_input,
@@ -69,7 +72,6 @@ if api_key:
                             )
                         )
                     except Exception:
-                        # Reserve-model als de eerste server toch bezet is
                         response = client.models.generate_content(
                             model='gemini-2.5-flash',
                             contents=user_input,
@@ -80,15 +82,39 @@ if api_key:
                         )
                     
                     if response.text:
-                        st.success("**Vertaling:**")
-                        st.code(response.text, language="text")
-                        st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
+                        full_text = response.text
+                        
+                        # We splitsen het antwoord van de AI op het '---' teken
+                        if "---" in full_text:
+                            parts = full_text.split("---")
+                            translation_part = parts[0].strip()
+                            explanation_part = parts[1].strip()
+                        else:
+                            translation_part = full_text.strip()
+                            explanation_part = "Geen extra uitleg beschikbaar."
+
+                        # Haal ongewenste symbolen uit het kopieergedeelte
+                        cleaned_translation = translation_part.replace("**", "").replace("*", "").strip()
+                        
+                        st.success("**Klaar!**")
+                        
+                        # 📲 Schone kopieerbox voor WhatsApp (ZONDER de uitleg)
+                        st.text_input(
+                            label="Tik hierop om te kopiëren voor de afzender:", 
+                            value=cleaned_translation, 
+                            key="output_text"
+                        )
+                        
+                        # 📖 De uitleg zetten we er netjes apart onder
+                        st.info("**Wat betekent dit precies?**")
+                        st.write(explanation_part)
+                        
                     else:
-                        st.error("Google stuurde een leeg antwoord terug. Probeer het nog eens.")
+                        st.error("Google stuurde een leeg antwoord terug.")
                         
             except Exception as e:
-                st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
+                st.error(f"Er ging iets mis: {e}")
         else:
-            st.warning("Typ eerst een tekst om te vertalen.")
+            st.warning("Typ eerst een tekst.")
 else:
-    st.info("Vul eerst je Google Gemini API-sleutel in om de app gratis te gebruiken.")
+    st.info("Vul eerst je Google Gemini API-sleutel in.")
