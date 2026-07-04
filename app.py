@@ -1,14 +1,14 @@
 import streamlit as st
 from groq import Groq
 
-# 1. Pagina-instellingen voor mobiel (iPhone)
+# 1. Pagina-instellingen voor mobile (iPhone)
 st.set_page_config(
     page_title="Dominicaanse Straattaal",
     page_icon="🇩🇴",
     layout="centered"
 )
 
-# FIX: CSS-styling uitgebreid om het Streamlit logo en de bovenbalk te VERBERGEN
+# CSS-styling uitgebreid om het logo te verbergen en formulier-randen weg te halen
 st.markdown("""
     <style>
     /* Verberg de Streamlit bovenbalk, het logo en de header */
@@ -37,6 +37,11 @@ st.markdown("""
     .stTextArea label p {
         font-size: 16px !important;
     }
+    /* Haal de lelijke standaard rand van het Streamlit formulier weg */
+    [data-testid="stForm"] {
+        border: none !important;
+        padding: 0 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -50,60 +55,61 @@ else:
     st.error("⚠️ API-sleutel niet gevonden in Streamlit Secrets!")
     st.stop()
 
-# Invoervak voor de tekst
-user_input = st.text_area("Typ of plak hier je tekst (Engels of Dominicaans):", height=100)
+# FIX: We stoppen het invoervak en de knop in een formulier. Dit activeert de Enter-knop op je iPhone!
+with st.form("iphone_translate_form", clear_on_submit=False):
+    user_input = st.text_area("Typ of plak hier je tekst (Engels of Dominicaans):", height=100)
+    # De officiële formulier-submit knop met jouw Dominicaanse vlag
+    submit_triggered = st.form_submit_button("🇩🇴 Vertaal nu")
 
-if st.button("🇩🇴 Vertaal nu"):
-    if user_input:
-        system_prompt = (
-            "You are an expert translator and language identifier for Dominican Republic street language.\n"
-            "CRUCIAL TASK: Analyze the user's input text. Automatically detect if it is in English or in Dominican Spanish slang.\n\n"
-            "IF THE INPUT IS IN ENGLISH:\n"
-            "The user wants to reply to a Dominican person. Therefore, the copy-paste box (Part 1) MUST contain the authentic Dominican Spanish translation.\n"
-            "1. Improve the English input so it sounds like a natural, confident native English speaker first.\n"
-            "2. Translate that improved meaning into authentic Dominican Spanish street language (using terms like klk, tigre, vaina, heavy, dime a ver naturally).\n"
-            "3. Translate that exact same meaning into a natural, correct Dutch sentence.\n\n"
-            "IF THE INPUT IS IN DOMINICAN SPANISH/SLANG:\n"
-            "The user received a message from a Dominican person and wants to reply in English. Therefore, the copy-paste box (Part 1) MUST contain the improved English translation.\n"
-            "1. Translate the Dominican street text into clear, natural, and confident English that is perfect to send back as a reply.\n"
-            "2. Translate that same meaning into a single, natural, and correct Dutch sentence so the user understands the incoming message.\n\n"
-            "CRUCIAL OUTPUT RULES FOR FORMATTING:\n"
-            "You must split your response into exactly two parts using the delimiter '---'.\n"
-            "Part 1 (Before '---'): Output ONLY ONE SINGLE translation sentence meant for the recipient. If input was English, this MUST be Dominican Spanish. If input was Dominican Spanish, this MUST be English. No formatting, no asterisks, no notes, no alternatives.\n"
-            "Part 2 (After '---'): Output ONLY the direct, natural translation of the entire phrase in the Dutch language as ONE single text block. No fluff, just the pure Dutch meaning."
-        )
+# De vertaling start als je op de knop klikt ÓF op de Enter-toets van je toetsenbord drukt
+if (submit_triggered or st.session_state.get('FormSubmitter:iphone_translate_form-🇩🇴 Vertaal nu')) and user_input:
+    system_prompt = (
+        "You are an expert translator and language identifier for Dominican Republic street language.\n"
+        "CRUCIAL TASK: Analyze the user's input text. Automatically detect if it is in English or in Dominican Spanish slang.\n\n"
+        "IF THE INPUT IS IN ENGLISH:\n"
+        "The user wants to reply to a Dominican person. Therefore, the copy-paste box (Part 1) MUST contain the authentic Dominican Spanish translation.\n"
+        "1. Improve the English input so it sounds like a natural, confident native English speaker first.\n"
+        "2. Translate that improved meaning into authentic Dominican Spanish street language (using terms like klk, tigre, vaina, heavy, dime a ver naturally).\n"
+        "3. Translate that exact same meaning into a natural, correct Dutch sentence.\n\n"
+        "IF THE INPUT IS IN DOMINICAN SPANISH/SLANG:\n"
+        "The user received a message from a Dominican person and wants to reply in English. Therefore, the copy-paste box (Part 1) MUST contain the improved English translation.\n"
+        "1. Translate the Dominican street text into clear, natural, and confident English that is perfect to send back as a reply.\n"
+        "2. Translate that same meaning into a single, natural, and correct Dutch sentence so the user understands the incoming message.\n\n"
+        "CRUCIAL OUTPUT RULES FOR FORMATTING:\n"
+        "You must split your response into exactly two parts using the delimiter '---'.\n"
+        "Part 1 (Before '---'): Output ONLY ONE SINGLE translation sentence meant for the recipient. If input was English, this MUST be Dominican Spanish. If input was Dominican Spanish, this MUST be English. No formatting, no asterisks, no notes, no alternatives.\n"
+        "Part 2 (After '---'): Output ONLY the direct, natural translation of the entire phrase in the Dutch language as ONE single text block. No fluff, just the pure Dutch meaning."
+    )
 
-        try:
-            with st.spinner("Vertalen..."):
-                client = Groq(api_key=api_key)
-                
-                response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_input}
-                    ],
-                    temperature=0.7
-                )
-                
-                full_text = response.choices[0].message.content
-                
-                if "---" in full_text:
-                    parts = full_text.split("---")
-                    translation_part = parts[0].strip()
-                    explanation_part = parts[1].strip()
-                else:
-                    translation_part = full_text.strip()
-                    explanation_part = "Geen Nederlandse vertaling beschikbaar."
+    try:
+        with st.spinner("Vertalen..."):
+            client = Groq(api_key=api_key)
+            
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_input}
+                ],
+                temperature=0.7
+            )
+            
+            full_text = response.choices[0].message.content
+            
+            if "---" in full_text:
+                parts = full_text.split("---")
+                translation_part = parts[0].strip()
+                explanation_part = parts[1].strip()
+            else:
+                translation_part = full_text.strip()
+                explanation_part = "Geen Nederlandse vertaling beschikbaar."
 
-                cleaned_translation = translation_part.replace("**", "").replace("*", "").strip()
-                cleaned_dutch = explanation_part.replace("**", "").replace("*", "").strip()
+            cleaned_translation = translation_part.replace("**", "").replace("*", "").strip()
+            cleaned_dutch = explanation_part.replace("**", "").replace("*", "").strip()
+            
+            st.write("📋 **Kopieer de vertaling hieronder voor de afzender:**")
+            st.code(cleaned_translation, language="text")
+            st.info(f"**Betekenis in het Nederlands:**\n\n{cleaned_dutch}")
                 
-                st.write("📋 **Kopieer de vertaling hieronder voor de afzender:**")
-                st.code(cleaned_translation, language="text")
-                st.info(f"**Betekenis in het Nederlands:**\n\n{cleaned_dutch}")
-                    
-        except Exception as e:
-            st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
-    else:
-        st.warning("Typ eerst een tekst.")
+    except Exception as e:
+        st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
