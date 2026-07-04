@@ -45,21 +45,23 @@ user_input = st.text_area("Typ of plak hier je tekst (Engels of Dominicaans):", 
 
 if st.button("🇩🇴 Vertaal nu"):
     if user_input:
-        # FIX: De instructies zijn nu extreem streng gemaakt om slechts ÉÉN zin zonder alternatieven te genereren
+        # Meschere, dwingende instructies voor de AI om de kopieerbox ALTIJD voor de afzender te maken
         system_prompt = (
             "You are an expert translator and language identifier for Dominican Republic street language.\n"
             "CRUCIAL TASK: Analyze the user's input text. Automatically detect if it is in English or in Dominican Spanish slang.\n\n"
             "IF THE INPUT IS IN ENGLISH:\n"
+            "The user wants to reply to a Dominican person. Therefore, the copy-paste box (Part 1) MUST contain the authentic Dominican Spanish translation.\n"
             "1. Improve the English input so it sounds like a natural, confident native English speaker first.\n"
             "2. Translate that improved meaning into authentic Dominican Spanish street language (using terms like klk, tigre, vaina, heavy, dime a ver naturally).\n"
             "3. Translate that exact same meaning into a natural, correct Dutch sentence.\n\n"
             "IF THE INPUT IS IN DOMINICAN SPANISH/SLANG:\n"
-            "1. Translate the Dominican street text into clear, natural English.\n"
-            "2. Translate that same meaning into a single, natural, and correct Dutch sentence.\n\n"
+            "The user received a message from a Dominican person and wants to reply in English. Therefore, the copy-paste box (Part 1) MUST contain the improved English translation.\n"
+            "1. Translate the Dominican street text into clear, natural, and confident English that is perfect to send back as a reply.\n"
+            "2. Translate that same meaning into a single, natural, and correct Dutch sentence so the user understands the incoming message.\n\n"
             "CRUCIAL OUTPUT RULES FOR FORMATTING:\n"
             "You must split your response into exactly two parts using the delimiter '---'.\n"
-            "Part 1 (Before '---'): Output ONLY ONE SINGLE, BEST direct translation sentence. Do NOT list multiple options. Do NOT separate alternatives with hyphens (-). Do NOT include notes or markdown formatting like asterisks. Just give the single final sentence to be copied.\n"
-            "Part 2 (After '---'): Output ONLY the direct, natural translation of that exact phrase in the Dutch language as ONE single text block. No fluff, just the pure Dutch meaning."
+            "Part 1 (Before '---'): Output ONLY ONE SINGLE translation sentence meant for the recipient. If input was English, this MUST be Dominican Spanish. If input was Dominican Spanish, this MUST be English. No formatting, no asterisks, no notes, no alternatives.\n"
+            "Part 2 (After '---'): Output ONLY the direct, natural translation of the entire phrase in the Dutch language as ONE single text block. No fluff, just the pure Dutch meaning."
         )
 
         try:
