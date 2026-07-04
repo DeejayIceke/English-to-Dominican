@@ -8,7 +8,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# FIX: CSS-styling aangepast voor grotere tekst op knoppen en in het invoervak
+# CSS-styling voor grotere tekst op knoppen en in het invoervak
 st.markdown("""
     <style>
     /* Styling voor de vertaalknop */
@@ -16,16 +16,16 @@ st.markdown("""
         width: 100%;
         border-radius: 12px;
         height: 55px;
-        font-size: 20px; /* Grotere tekst op de knop */
+        font-size: 20px;
         font-weight: bold;
     }
     /* Styling voor de tekst binnen het invoervak */
     .stTextArea textarea {
-        font-size: 18px !important; /* Grotere typtekst */
+        font-size: 18px !important;
     }
     /* Styling voor de label boven het invoervak */
     .stTextArea label p {
-        font-size: 16px !important; 
+        font-size: 16px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -43,9 +43,9 @@ else:
 # Invoervak voor de tekst
 user_input = st.text_area("Typ of plak hier je tekst (Engels of Dominicaans):", height=100)
 
-# FIX: Vertaal-knop aangepast met Dominicaanse vlag en zonder vuurtje
 if st.button("🇩🇴 Vertaal nu"):
     if user_input:
+        # FIX: De instructies zijn nu extreem streng gemaakt om slechts ÉÉN zin zonder alternatieven te genereren
         system_prompt = (
             "You are an expert translator and language identifier for Dominican Republic street language.\n"
             "CRUCIAL TASK: Analyze the user's input text. Automatically detect if it is in English or in Dominican Spanish slang.\n\n"
@@ -56,9 +56,10 @@ if st.button("🇩🇴 Vertaal nu"):
             "IF THE INPUT IS IN DOMINICAN SPANISH/SLANG:\n"
             "1. Translate the Dominican street text into clear, natural English.\n"
             "2. Translate that same meaning into a single, natural, and correct Dutch sentence.\n\n"
-            "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using the delimiter '---'.\n"
-            "Part 1 (Before '---'): Output ONLY the clean, raw Dominican/English translation. No formatting, no asterisks, no notes. This will be copied to clipboard.\n"
-            "Part 2 (After '---'): Output ONLY the direct, natural translation of the phrase in the Dutch language as ONE single text block. No fluff, just the pure Dutch meaning."
+            "CRUCIAL OUTPUT RULES FOR FORMATTING:\n"
+            "You must split your response into exactly two parts using the delimiter '---'.\n"
+            "Part 1 (Before '---'): Output ONLY ONE SINGLE, BEST direct translation sentence. Do NOT list multiple options. Do NOT separate alternatives with hyphens (-). Do NOT include notes or markdown formatting like asterisks. Just give the single final sentence to be copied.\n"
+            "Part 2 (After '---'): Output ONLY the direct, natural translation of that exact phrase in the Dutch language as ONE single text block. No fluff, just the pure Dutch meaning."
         )
 
         try:
