@@ -1,6 +1,6 @@
 import streamlit as st
-from google import genai
-from google.genai import types
+import requests
+import json
 
 # 1. Pagina-instellingen voor mobiel (iPhone)
 st.set_page_config(
@@ -25,11 +25,11 @@ st.markdown("""
 st.title("🇩🇴 Dominican Translator")
 st.write("Vertaal, verbeter en begrijp Dominicaanse straattaal.")
 
-# Laad het token uit de Streamlit Secrets
+# Laad de Groq sleutel uit de Streamlit Secrets
 if "GEMINI_API_KEY" in st.secrets:
-    token = st.secrets["GEMINI_API_KEY"].strip()
+    api_key = st.secrets["GEMINI_API_KEY"].strip()
 else:
-    st.error("⚠️ Token niet gevonden in Streamlit Secrets!")
+    st.error("⚠️ API-sleutel niet gevonden in Streamlit Secrets!")
     st.stop()
 
 # 3. Kies de vertaalrichting
@@ -47,48 +47,46 @@ if st.button("Vertaal nu 🔥"):
             system_prompt = (
                 "You are an expert translator and language improver for Dominican Republic street slang.\n"
                 "Step 1: Improve the user's English input so it sounds like a natural English speaker.\n"
-                "Step 2: Translate that improved meaning into authentic Dominican Spanish street slang.\n"
-                "Step 3: Translate that exact same meaning into a single, natural, and correct Dutch sentence.\n"
+                "Step 2: Translate that improved meaning into authentic Dominican Spanish street slang (using terms like klk, tigre, vaina, heavy, dime a ver).\n"
+                "Step 3: Translate that exact same meaning into a natural, correct Dutch sentence.\n"
                 "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using the delimiter '---'.\n"
                 "Part 1 (Before '---'): Output ONLY the clean, raw Dominican translation. No formatting, no asterisks, no notes.\n"
-                "Part 2 (After '---'): Output ONLY the direct, natural translation of the entire phrase in the Dutch language. Do NOT use bullet points, do NOT list individual words, and do NOT write English explanations. Just write ONE single, complete Dutch text/sentence that explains the total meaning."
+                "Part 2 (After '---'): Output ONLY the direct, natural translation of the phrase in the Dutch language. No bullet points, no grammatical explanations, no extra fluff. Just the pure Dutch sentence."
             )
         else:
             system_prompt = (
                 "You are an expert in Dominican Republic slang.\n"
                 "Step 1: Translate the Dominican slang text into clear, natural English.\n"
-                "Step 2: Translate that same meaning into a single, natural, and correct Dutch sentence.\n"
+                "Step 2: Translate that same meaning into a natural, correct Dutch sentence.\n"
                 "CRUCIAL OUTPUT FORMAT: You must split your response into exactly two parts using the delimiter '---'.\n"
                 "Part 1 (Before '---'): Output ONLY the clean, raw English translation.\n"
-                "Part 2 (After '---'): Output ONLY the direct, natural translation of the phrase in the Dutch language as ONE single text. No bullet points, no individual word breakdowns, no fluff."
+                "Part 2 (After '---'): Output ONLY the direct, natural translation of the phrase in the Dutch language as ONE single text. No fluff, just the pure Dutch sentence."
             )
 
         try:
             with st.spinner("Vertalen..."):
-                # FIX: We geven de 'AQ...' code nu expliciet mee als OAuth/Access token aan de client
-                client = genai.Client(http_options={'headers': {'Authorization': f'Bearer {token}'}})
+                # We schieten het verzoek RECHTSTREEKS naar de stabiele en snelle Groq-servers
+                url = "https://groq.com"
                 
-                try:
-                    response = client.models.generate_content(
-                        model='gemini-1.5-flash',
-                        contents=user_input,
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_prompt,
-                            temperature=0.8
-                        )
-                    )
-                except Exception:
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=user_input,
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_prompt,
-                            temperature=0.8
-                        )
-                    )
+                headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                }
                 
-                if response.text:
-                    full_text = response.text
+                data = {
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_input}
+                    ],
+                    "temperature": 0.7
+                }
+                
+                response = requests.post(url=url, headers=headers, json=data)
+                result_json = response.json()
+                
+                if response.status_code == 200 and 'choices' in result_json:
+                    full_text = result_json['choices'][0]['message']['content']
                     
                     if "---" in full_text:
                         parts = full_text.split("---")
@@ -102,12 +100,17 @@ if st.button("Vertaal nu 🔥"):
                     cleaned_dutch = explanation_part.replace("**", "").replace("*", "").strip()
                     
                     st.write("📋 **Kopieer de vertaling hieronder voor de afzender:**")
+                    
+                    # Dit toont een strak grijs vak met een ingebouwde iOS kopieerknop
                     st.code(cleaned_translation, language="text")
-                    st.info(f"**Wat betekent dit in het Nederlands:**\n\n{cleaned_dutch}")
+                    
+                    # Pure Nederlandse vertaling eronder zonder extra tekst
+                    st.info(f"**Betekenis in het Nederlands:**\n\n{cleaned_dutch}")
                 else:
-                    st.error("Google stuurde een leeg antwoord terug.")
+                    error_msg = result_json.get('error', {}).get('message', 'Onbekende fout')
+                    st.error(f"Fout van server: {error_msg}")
                     
         except Exception as e:
-            st.error(f"Er ging iets mis met je token: {e}")
-else:
-    st.info("Voeg eerst je token toe aan de Secrets.")
+            st.error(f"Er ging iets mis met de verbinding: {e}")
+    else:
+        st.warning("Typ eerst een tekst.")
