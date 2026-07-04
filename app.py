@@ -24,7 +24,7 @@ st.markdown("""
 st.title("🇩🇴 Dominicaanse Straattaal")
 st.write("Vertaal, verbeter en begrijp de taal van de Dominicaanse straten.")
 
-# Laad de Groq sleutel uit de Streamlit Secrets
+# De sleutel wordt hier geruisloos ingeladen. Als hij ontbreekt, stopt de app direct met een foutmelding.
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"].strip()
 else:
@@ -64,10 +64,8 @@ if st.button("Vertaal nu 🔥"):
 
         try:
             with st.spinner("Vertalen..."):
-                # We starten de officiële Groq client op met jouw gsk_ sleutel
                 client = Groq(api_key=api_key)
                 
-                # We roepen het krachtige Llama model aan via de officiële bibliotheek
                 response = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[
@@ -77,12 +75,12 @@ if st.button("Vertaal nu 🔥"):
                     temperature=0.7
                 )
                 
-                full_text = response.choices[0].message.content
+                full_text = response.choices.message.content
                 
                 if "---" in full_text:
                     parts = full_text.split("---")
-                    translation_part = parts[0].strip()
-                    explanation_part = parts[1].strip()
+                    translation_part = parts.strip()
+                    explanation_part = parts.strip()
                 else:
                     translation_part = full_text.strip()
                     explanation_part = "Geen Nederlandse vertaling beschikbaar."
@@ -98,5 +96,4 @@ if st.button("Vertaal nu 🔥"):
             st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
     else:
         st.warning("Typ eerst een tekst.")
-else:
-    st.info("Vul eerst je API-sleutel in.")
+# De oude 'else' melding onderaan is nu volledig verwijderd!
