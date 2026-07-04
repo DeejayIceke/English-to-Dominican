@@ -1,6 +1,5 @@
 import streamlit as st
-import requests
-import json
+from groq import Groq
 
 # 1. Pagina-instellingen voor mobiel (iPhone)
 st.set_page_config(
@@ -65,48 +64,39 @@ if st.button("Vertaal nu 🔥"):
 
         try:
             with st.spinner("Vertalen..."):
-                url = "https://groq.com"
+                # We starten de officiële Groq client op met jouw gsk_ sleutel
+                client = Groq(api_key=api_key)
                 
-                headers = {
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json"
-                }
-                
-                data = {
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": [
+                # We roepen het krachtige Llama model aan via de officiële bibliotheek
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_input}
                     ],
-                    "temperature": 0.7
-                }
+                    temperature=0.7
+                )
                 
-                response = requests.post(url=url, headers=headers, json=data)
-                result_json = response.json()
+                full_text = response.choices[0].message.content
                 
-                if response.status_code == 200 and 'choices' in result_json:
-                    full_text = result_json['choices'][0]['message']['content']
-                    
-                    # FIX: Hier splitsen en strippen we de tekst nu per onderdeel correct op zonder te crashen
-                    if "---" in full_text:
-                        parts = full_text.split("---")
-                        translation_part = parts[0].strip()
-                        explanation_part = parts[1].strip()
-                    else:
-                        translation_part = full_text.strip()
-                        explanation_part = "Geen Nederlandse vertaling beschikbaar."
-
-                    cleaned_translation = translation_part.replace("**", "").replace("*", "").strip()
-                    cleaned_dutch = explanation_part.replace("**", "").replace("*", "").strip()
-                    
-                    st.write("📋 **Kopieer de vertaling hieronder voor de afzender:**")
-                    st.code(cleaned_translation, language="text")
-                    st.info(f"**Betekenis in het Nederlands:**\n\n{cleaned_dutch}")
+                if "---" in full_text:
+                    parts = full_text.split("---")
+                    translation_part = parts[0].strip()
+                    explanation_part = parts[1].strip()
                 else:
-                    error_msg = result_json.get('error', {}).get('message', 'Onbekende fout')
-                    st.error(f"Fout van server: {error_msg}")
+                    translation_part = full_text.strip()
+                    explanation_part = "Geen Nederlandse vertaling beschikbaar."
+
+                cleaned_translation = translation_part.replace("**", "").replace("*", "").strip()
+                cleaned_dutch = explanation_part.replace("**", "").replace("*", "").strip()
+                
+                st.write("📋 **Kopieer de vertaling hieronder voor de afzender:**")
+                st.code(cleaned_translation, language="text")
+                st.info(f"**Betekenis in het Nederlands:**\n\n{cleaned_dutch}")
                     
         except Exception as e:
-            st.error(f"Er ging iets mis met de verbinding: {e}")
+            st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
     else:
         st.warning("Typ eerst een tekst.")
+else:
+    st.info("Vul eerst je API-sleutel in.")
