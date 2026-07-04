@@ -56,26 +56,35 @@ if api_key:
 
             try:
                 with st.spinner("Vertalen via Google Gemini..."):
-                    # We starten de officiële Google Client op met jouw sleutel
                     client = genai.Client(api_key=api_key.strip())
                     
-                    # We roepen het model aan via de officiële bibliotheek
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=user_input,
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_prompt,
-                            temperature=0.8
+                    try:
+                        # Probeere eerst het stabiele gemini-1.5 model om drukte te vermijden
+                        response = client.models.generate_content(
+                            model='gemini-1.5-flash',
+                            contents=user_input,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_prompt,
+                                temperature=0.8
+                            )
                         )
-                    )
+                    except Exception:
+                        # Reserve-model als de eerste server toch bezet is
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=user_input,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_prompt,
+                                temperature=0.8
+                            )
+                        )
                     
-                    # Toon de vertaling netjes op het scherm
                     if response.text:
                         st.success("**Vertaling:**")
                         st.code(response.text, language="text")
                         st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
                     else:
-                        st.error("Google stuurde een leeg antwoord terug.")
+                        st.error("Google stuurde een leeg antwoord terug. Probeer het nog eens.")
                         
             except Exception as e:
                 st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
