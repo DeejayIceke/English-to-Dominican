@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import json
 
 # 1. Pagina-instellingen voor mobiel (iPhone)
 st.set_page_config(
@@ -58,11 +57,14 @@ if api_key:
 
             try:
                 with st.spinner("Vertalen via Google Gemini..."):
-                    # FIX: De URL is nu helemaal correct opgebouwd met een vraagteken voor de key parameter
-                    clean_key = api_key.strip()
-                    url = f"https://googleapis.com{clean_key}"
+                    # FIX: De URL is nu ALTIJD hetzelfde en kan NOOIT meer breken door een sleutel!
+                    url = "https://googleapis.com"
                     
-                    headers = {"Content-Type": "application/json"}
+                    # We sturen de sleutel veilig mee via de x-goog-api-key header
+                    headers = {
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": api_key.strip()
+                    }
                     
                     data = {
                         "contents": [{
