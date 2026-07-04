@@ -1,5 +1,6 @@
 import streamlit as st
-from openai import OpenAI
+import requests
+import json
 
 # 1. Pagina-instellingen voor mobiel (iPhone)
 st.set_page_config(
@@ -27,12 +28,6 @@ st.write("Vertaal snel tussen Engels en Dominicaanse straattaal (*Qué lo qué!*
 api_key = st.text_input("Vul je GRATIS OpenRouter API sleutel in:", type="password")
 
 if api_key:
-    # We maken de OpenAI client aan voor OpenRouter
-    client = OpenAI(
-        base_url="https://openrouter.ai",
-        api_key=api_key,
-    )
-
     # 3. Kies de vertaalrichting
     direction = st.radio(
         "Kies de richting:",
@@ -61,26 +56,40 @@ if api_key:
 
             try:
                 with st.spinner("Vertalen..."):
-                    # We gebruiken nu het super snelle en stabiele Google Gemini model (volledig gratis via OpenRouter)
-                    response = client.chat.completions.create(
-                        model="google/gemini-2.5-flash:free", 
-                        messages=[
+                    # We schieten de aanroep rechtstreeks naar OpenRouter via een HTTP POST-request
+                    headers = {
+                        "Authorization": f"Bearer {api_key.strip()}",
+                        "Content-Type": "application/json"
+                    }
+                    
+                    data = {
+                        "model": "google/gemini-2.5-flash:free",
+                        "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_input}
                         ],
-                        temperature=0.8
-                    )
-                
-                # Controleer of het antwoord correct is binnengekomen
-                if hasattr(response, 'choices') and len(response.choices) > 0:
-                    translation = response.choices[0].message.content
-                    st.success("**Vertaling:**")
-                    st.code(translation, language="text")
-                    st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
-                else:
-                    # Als OpenRouter een fouttekst terugstuurt in plaats van data, tonen we die hier netjes
-                    st.error(f"OpenRouter stuurde geen geldige vertaling terug. Reactie: {response}")
+                        "temperature": 0.8
+                    }
                     
+                    response = requests.post(
+                        url="https://openrouter.ai",
+                        headers=headers,
+                        data=json.dumps(data)
+                    )
+                    
+                    # Verwerk het resultaat
+                    result_json = response.json()
+                    
+                    if response.status_code == 200 and 'choices' in result_json:
+                        translation = result_json['choices'][0]['message']['content']
+                        st.success("**Vertaling:**")
+                        st.code(translation, language="text")
+                        st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
+                    else:
+                        # Toon de exacte foutboodschap van OpenRouter als het misgaat
+                        error_msg = result_json.get('error', {}).get('message', 'Onbekende fout')
+                        st.error(f"Fout van OpenRouter: {error_msg}")
+                        
             except Exception as e:
                 st.error(f"Er ging iets mis met de verbinding: {e}")
         else:
