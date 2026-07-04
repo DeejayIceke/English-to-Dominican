@@ -1,5 +1,5 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 
 # 1. Pagina-instellingen voor mobiel (iPhone)
 st.set_page_config(
@@ -27,9 +27,11 @@ st.write("Vertaal snel tussen Engels en Dominicaanse straattaal (*Qué lo qué!*
 api_key = st.text_input("Vul je GRATIS OpenRouter API sleutel in:", type="password")
 
 if api_key:
-    # We configureren de OpenAI-bibliotheek om verbinding te maken met OpenRouter
-    openai.api_key = api_key
-    openai.api_base = "https://openrouter.ai"
+    # We maken de nieuwe OpenAI client aan, speciaal geconfigureerd voor OpenRouter
+    client = OpenAI(
+        base_url="https://openrouter.ai",
+        api_key=api_key,
+    )
 
     # 3. Kies de vertaalrichting
     direction = st.radio(
@@ -59,8 +61,8 @@ if api_key:
 
             try:
                 with st.spinner("Vertalen..."):
-                    # We gebruiken hier een volledig gratis en krachtig open-source model via OpenRouter
-                    response = openai.ChatCompletion.create(
+                    # Dit is de gloednieuwe manier om het model aan te roepen
+                    response = client.chat.completions.create(
                         model="meta-llama/llama-3-8b-instruct:free", 
                         messages=[
                             {"role": "system", "content": system_prompt},
@@ -69,6 +71,7 @@ if api_key:
                         temperature=0.8
                     )
                 
+                # Het antwoord uitlezen op de nieuwe manier
                 translation = response.choices[0].message.content
                 
                 st.success("**Vertaling:**")
@@ -76,7 +79,7 @@ if api_key:
                 st.caption("💡 Tip op je iPhone: Tik op het kopieer-icoontje rechtsboven in het grijze vak hierboven!")
 
             except Exception as e:
-                st.error(f"Er ging iets mis: {e}")
+                st.error(f"Er ging iets mis met het ophalen van de vertaling: {e}")
         else:
             st.warning("Typ eerst een tekst om te vertalen.")
 else:
